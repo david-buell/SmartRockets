@@ -10,9 +10,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Scripts\Engine.ts" />
     <None Remove="Scripts\PageContent.ts" />
+    <None Remove="Scripts\planet.ts" />
     <None Remove="Scripts\Rocket.ts" />
     <None Remove="Scripts\Scene.ts" />
+    <None Remove="Scripts\Vector.ts" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,14 +29,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\images\" />
-  </ItemGroup>
-
-  <ItemGroup>
+    <TypeScriptCompile Include="Scripts\Engine.ts" />
+    <TypeScriptCompile Include="Scripts\Planet.ts" />
     <TypeScriptCompile Include="Scripts\Scene.ts" />
     <TypeScriptCompile Include="Scripts\MissionControl.ts" />
     <TypeScriptCompile Include="Scripts\PageContent.ts" />
     <TypeScriptCompile Include="Scripts\Rocket.ts" />
+    <TypeScriptCompile Include="Scripts\Vector.ts" />
   </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
