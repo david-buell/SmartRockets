@@ -17,6 +17,7 @@
     <None Remove="Scripts\Polygon.ts" />
     <None Remove="Scripts\Rocket.ts" />
     <None Remove="Scripts\Scene.ts" />
+    <None Remove="Scripts\Stats.ts" />
     <None Remove="Scripts\Vector.ts" />
   </ItemGroup>
 
@@ -34,6 +35,7 @@
     <TypeScriptCompile Include="Scripts\MissionControl.ts" />
     <TypeScriptCompile Include="Scripts\PageContent.ts" />
     <TypeScriptCompile Include="Scripts\Rocket.ts" />
+    <TypeScriptCompile Include="Scripts\Stats.ts" />
     <TypeScriptCompile Include="Scripts\Vector.ts" />
   </ItemGroup>
 

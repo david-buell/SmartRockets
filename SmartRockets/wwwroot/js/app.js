@@ -1,3 +1,61 @@
+var Vector = /** @class */ (function () {
+    function Vector(x, y) {
+        if (x === void 0) { x = 0; }
+        if (y === void 0) { y = 0; }
+        this.x = 0;
+        this.y = 0;
+        this.set(x, y);
+    }
+    Vector.prototype.set = function (x, y) {
+        this.x = x;
+        this.y = y;
+    };
+    Vector.prototype.add = function (v) {
+        this.x += v.x;
+        this.y += v.y;
+    };
+    Vector.prototype.multiply = function (val) {
+        this.x *= val;
+        this.y *= val;
+    };
+    Vector.prototype.distance = function (v) {
+        if (v) {
+            return Math.abs(Math.sqrt(((v.x - this.x) * (v.x - this.x)) + ((v.y - this.y) * (v.y - this.y))));
+        }
+        else {
+            return Math.abs(Math.sqrt((this.x * this.x) + (this.y * this.y)));
+        }
+    };
+    /** Returns the current heading in radians. */
+    Vector.prototype.heading = function () {
+        return Math.atan2(this.y, this.x);
+    };
+    Vector.prototype.magnitude = function () {
+        return Math.sqrt((this.x * this.x) + (this.y * this.y));
+    };
+    Vector.prototype.isZero = function () {
+        return (this.x == 0 && this.y == 0);
+    };
+    return Vector;
+}());
+/// <reference path="Vector.ts" />
+var Circle = /** @class */ (function () {
+    function Circle(x, y, radius) {
+        if (x === void 0) { x = 0; }
+        if (y === void 0) { y = 0; }
+        if (radius === void 0) { radius = 0; }
+        this.location = new Vector(0, 0);
+        this.radius = 0;
+        this.location.x = x;
+        this.location.y = y;
+        this.radius = radius;
+    }
+    Circle.prototype.getLocation = function () { return this.location; };
+    ;
+    Circle.prototype.getRadius = function () { return this.radius; };
+    ;
+    return Circle;
+}());
 var Engine;
 (function (Engine) {
     Engine[Engine["Main"] = 0] = "Main";
@@ -35,6 +93,7 @@ var Scene = /** @class */ (function (_super) {
     __extends(Scene, _super);
     function Scene() {
         var _this = _super.call(this) || this;
+        _this.paused = false;
         window.requestAnimationFrame(function () { return _this.animate(); });
         return _this;
     }
@@ -47,6 +106,8 @@ var Scene = /** @class */ (function (_super) {
     };
     /** Removes all information fromt the canvas while preserving transformations. */
     Scene.prototype.clearCanvas = function () {
+        if (this.paused)
+            return; // don't update the screen if paused.
         // Store the current transformation matrix
         this.context.save();
         // Use the identity matrix while clearing the canvas
@@ -57,57 +118,6 @@ var Scene = /** @class */ (function (_super) {
     };
     return Scene;
 }(PageContent));
-var Vector = /** @class */ (function () {
-    function Vector(x, y) {
-        this.x = 0;
-        this.y = 0;
-        this.set(x, y);
-    }
-    Vector.prototype.set = function (x, y) {
-        this.x = x;
-        this.y = y;
-    };
-    Vector.prototype.add = function (v) {
-        this.x += v.x;
-        this.y += v.y;
-    };
-    Vector.prototype.multiply = function (val) {
-        this.x *= val;
-        this.y *= val;
-    };
-    Vector.prototype.distance = function (v) {
-        return Math.abs(Math.sqrt(((v.x - this.x) * (v.x - this.x)) + ((v.y - this.y) * (v.y - this.y))));
-    };
-    /** Returns the current heading in radians. */
-    Vector.prototype.heading = function () {
-        return Math.atan2(this.y, this.x);
-    };
-    Vector.prototype.magnitude = function () {
-        return Math.sqrt((this.x * this.x) + (this.y * this.y));
-    };
-    Vector.prototype.isZero = function () {
-        return (this.x == 0 && this.y == 0);
-    };
-    return Vector;
-}());
-/// <reference path="Vector.ts" />
-var Circle = /** @class */ (function () {
-    function Circle(x, y, radius) {
-        if (x === void 0) { x = 0; }
-        if (y === void 0) { y = 0; }
-        if (radius === void 0) { radius = 0; }
-        this.location = new Vector(0, 0);
-        this.radius = 0;
-        this.location.x = x;
-        this.location.y = y;
-        this.radius = radius;
-    }
-    Circle.prototype.getLocation = function () { return this.location; };
-    ;
-    Circle.prototype.getRadius = function () { return this.radius; };
-    ;
-    return Circle;
-}());
 /// <reference path="PageContent.ts" />
 /// <reference path="Circle.ts" />
 var Planet = /** @class */ (function (_super) {
@@ -118,11 +128,17 @@ var Planet = /** @class */ (function (_super) {
         _this.target = new Circle(_this.canvas.width / 2, 50, 20);
         // Center rectangle
         var poly = new Polygon();
-        poly.addPoint(new Vector(200, 300));
-        poly.addPoint(new Vector(600, 300));
-        poly.addPoint(new Vector(600, 320));
-        poly.addPoint(new Vector(200, 320));
+        poly.addPoint(new Vector(325, 300));
+        poly.addPoint(new Vector(475, 300));
+        poly.addPoint(new Vector(475, 350));
+        poly.addPoint(new Vector(325, 350));
         _this.obstacles.push(poly);
+        var poly2 = new Polygon();
+        poly2.addPoint(new Vector(200, 300));
+        poly2.addPoint(new Vector(600, 300));
+        poly2.addPoint(new Vector(600, 320));
+        poly2.addPoint(new Vector(200, 320));
+        //this.obstacles.push(poly2);
         var leftWall = new Polygon();
         leftWall.addPoint(new Vector(0, 0));
         leftWall.addPoint(new Vector(0, _this.canvas.height));
@@ -135,6 +151,9 @@ var Planet = /** @class */ (function (_super) {
         rightWall.addPoint(new Vector(_this.canvas.width, 0));
         rightWall.addPoint(new Vector(_this.canvas.width, _this.canvas.height));
         _this.obstacles.push(rightWall);
+        _this.ground = new Polygon();
+        _this.ground.addPoint(new Vector(0, _this.canvas.height));
+        _this.ground.addPoint(new Vector(_this.canvas.width, _this.canvas.height));
         return _this;
     }
     Planet.prototype.collision = function (p) {
@@ -149,11 +168,29 @@ var Planet = /** @class */ (function (_super) {
     Planet.prototype.hitTarget = function (p) {
         return p.collisionDetectionCircle(this.target);
     };
+    Planet.prototype.hitGround = function (p) {
+        return this.ground.collisionDetection(p);
+    };
+    Planet.prototype.distanceToTarget = function (p) {
+        return p.distance(this.target);
+    };
     Planet.prototype.draw = function () {
         var ctx = this.context;
         ctx.save();
+        this.drawGround(ctx);
         this.drawTarget();
         ctx.restore();
+    };
+    Planet.prototype.drawGround = function (ctx) {
+        ctx.beginPath();
+        ctx.moveTo(0, this.canvas.height);
+        ctx.lineTo(0, this.canvas.height - 20);
+        ctx.lineTo(this.canvas.width, this.canvas.height - 20);
+        ctx.lineTo(this.canvas.width, this.canvas.height);
+        ctx.lineTo(0, this.canvas.height);
+        ctx.fillStyle = '#00ff66';
+        ctx.fill();
+        ctx.closePath();
     };
     Planet.prototype.drawTarget = function () {
         var ctx = this.context;
@@ -161,8 +198,10 @@ var Planet = /** @class */ (function (_super) {
             var o = _a[_i];
             ctx.beginPath();
             o.drawPath(ctx);
-            ctx.fillStyle = '#ffff33';
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.75)';
+            ctx.strokeStyle = '#000';
             ctx.fill();
+            ctx.stroke();
             ctx.closePath();
         }
         ctx.beginPath();
@@ -275,6 +314,18 @@ var Polygon = /** @class */ (function () {
         }
         return false;
     };
+    Polygon.prototype.distance = function (circle) {
+        var minDistance = -1;
+        for (var _i = 0, _a = this.getPoints(); _i < _a.length; _i++) {
+            var points = _a[_i];
+            var distance = points.distance(circle.getLocation());
+            if (minDistance < 0)
+                minDistance = distance;
+            if (minDistance < distance)
+                minDistance = distance;
+        }
+        return minDistance;
+    };
     return Polygon;
 }());
 /// <reference path="PageContent.ts" />
@@ -285,21 +336,23 @@ var Rocket = /** @class */ (function (_super) {
     function Rocket() {
         var _this = _super.call(this) || this;
         _this.fuel = 100;
-        _this.exploded = false;
-        _this.succeeded = false;
+        _this.crashed = false;
+        _this.success = false;
+        _this.grounded = true;
         _this.length = 43;
         _this.width = 12;
         _this.mainBoosterPower = 0.1;
         _this.sideBoosterPower = 0.001;
         _this.angularDrag = 0.00005;
-        _this.position = new Vector(0, 0);
-        _this.velocity = new Vector(0, 0);
-        _this.acceleration = new Vector(0, 0);
+        _this.position = new Vector();
+        _this.velocity = new Vector();
+        _this.acceleration = new Vector();
         _this.angularVelocity = 0;
         _this.angularAcceleration = 0;
-        _this.gravity = new Vector(0, 0);
+        _this.gravity = new Vector();
         _this.angle = 0;
         _this.RIGHT_ANGLE_RADIANS = 1.5708; //(90 * Math.PI / 180) 
+        _this.RAD_TO_DEG = 57.2958; //(180 / Math.PI) 
         _this.pic = new Image();
         _this.picLoaded = false;
         _this.position.set(_this.canvas.width / 2, _this.canvas.height);
@@ -310,8 +363,11 @@ var Rocket = /** @class */ (function (_super) {
         return _this;
     }
     Rocket.prototype.fireEngine = function (d) {
+        if (this.crashed)
+            return; // Engines can't fire if the rocket is destroyed.
         var power = 0;
         if (d == Engine.Main) {
+            this.grounded = false; // Assume the rocket is no longer touching the ground
             power = this.mainBoosterPower;
             if (this.fuel < this.mainBoosterPower) {
                 power = this.fuel;
@@ -340,14 +396,29 @@ var Rocket = /** @class */ (function (_super) {
             }
         }
     };
-    Rocket.prototype.destroyed = function () {
-        this.exploded = true;
+    Rocket.prototype.setCrashed = function () {
+        // kill all moment in all directions.
+        if (!this.crashed) {
+            this.velocity.set(0, 0);
+            this.crashed = true;
+        }
     };
-    Rocket.prototype.success = function () {
-        this.succeeded = true;
+    Rocket.prototype.setOnGround = function () {
+        this.velocity.set(0, 0);
+        this.angularVelocity = 0;
+        this.grounded = true;
     };
-    Rocket.prototype.isDestroyed = function () {
-        return this.exploded;
+    Rocket.prototype.isGrounded = function () {
+        return this.grounded;
+    };
+    Rocket.prototype.setSuccess = function () {
+        this.success = true;
+    };
+    Rocket.prototype.isSuccess = function () {
+        return this.success;
+    };
+    Rocket.prototype.isCrashed = function () {
+        return this.crashed;
     };
     Rocket.prototype.setGravity = function (magnitude) {
         this.gravity.set(0, -magnitude);
@@ -369,6 +440,19 @@ var Rocket = /** @class */ (function (_super) {
         polygon.addPoint(hitBoxBottomRight);
         return polygon;
     };
+    Rocket.prototype.getSpeed = function () {
+        return this.velocity.distance();
+    };
+    Rocket.prototype.getHeading = function () {
+        var deg = (this.angle * this.RAD_TO_DEG) % 360;
+        if (deg < 0) {
+            deg = 360 + deg;
+        }
+        return deg;
+    };
+    Rocket.prototype.getFuel = function () {
+        return this.fuel;
+    };
     Rocket.prototype.draw = function () {
         if (!this.ready())
             return;
@@ -382,14 +466,16 @@ var Rocket = /** @class */ (function (_super) {
         ctx.restore();
     };
     Rocket.prototype.applyPhysics = function () {
-        if (this.succeeded)
+        if (this.success)
             return;
         // No engines, therefore no acceleration except for gravity.
-        if (!this.exploded) {
+        if (!this.crashed) {
             this.velocity.add(this.acceleration);
             this.angularVelocity += this.angularAcceleration;
         }
-        this.velocity.add(this.gravity);
+        if (!this.grounded) {
+            this.velocity.add(this.gravity);
+        }
         this.position.add(this.velocity);
         this.acceleration.set(0, 0);
         this.angle += this.angularVelocity;
@@ -414,9 +500,20 @@ var Rocket = /** @class */ (function (_super) {
     };
     return Rocket;
 }(PageContent));
+var Stats = /** @class */ (function () {
+    function Stats() {
+        this.Speed = 0;
+        this.Heading = 0;
+        this.Fuel = 0;
+        this.Distance = 0;
+        this.State = "";
+    }
+    return Stats;
+}());
 /// <reference path="Scene.ts" />
 /// <reference path="Planet.ts" />
 /// <reference path="Rocket.ts" />
+/// <reference path="Stats.ts" />
 /**
  * Handles the coordination and launching of all rockets. Provides the rockets with new instructions.
  * @author David Buell
@@ -427,9 +524,11 @@ var MissionControl = /** @class */ (function (_super) {
         var _this = _super.call(this) || this;
         _this.planet = new Planet();
         _this.rockets = [];
+        _this.stats = new Stats();
         _this.upPressed = false;
         _this.leftPressed = false;
         _this.rightPressed = false;
+        _this.statsUpdateFrequence = 0;
         _this.registerUserInput();
         var rocket = new Rocket();
         rocket.setGravity(-0.02);
@@ -437,6 +536,8 @@ var MissionControl = /** @class */ (function (_super) {
         return _this;
     }
     MissionControl.prototype.draw = function () {
+        if (this.paused)
+            return;
         this.planet.draw();
         for (var _i = 0, _a = this.rockets; _i < _a.length; _i++) {
             var rocket = _a[_i];
@@ -450,13 +551,66 @@ var MissionControl = /** @class */ (function (_super) {
                 rocket.fireEngine(Engine.RightThruster);
             }
             rocket.draw();
-            if (this.planet.collision(rocket.getHitBox())) {
-                rocket.destroyed();
-            }
             if (this.planet.hitTarget(rocket.getHitBox())) {
-                rocket.success();
+                rocket.setSuccess();
+            }
+            if (this.planet.collision(rocket.getHitBox())) {
+                rocket.setCrashed();
+            }
+            if (this.planet.hitGround(rocket.getHitBox())) {
+                rocket.setOnGround();
             }
         }
+        this.drawStats();
+    };
+    MissionControl.prototype.drawStats = function () {
+        var ctx = this.context;
+        var canvas = this.canvas;
+        this.updateStats();
+        // Status background.
+        ctx.beginPath();
+        ctx.moveTo(canvas.width - 110, 0);
+        ctx.lineTo(canvas.width - 0, 0);
+        ctx.lineTo(canvas.width - 0, 130);
+        ctx.lineTo(canvas.width - 110, 130);
+        ctx.lineTo(canvas.width - 110, 0);
+        ctx.fillStyle = 'rgba(41, 153, 43, 0.9)';
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = '#000';
+        ctx.fill();
+        ctx.stroke();
+        ctx.closePath();
+        // Status Text
+        ctx.font = "12px Helvetica";
+        ctx.fillStyle = '#fff';
+        ctx.fillText("Mission Control", canvas.width - 100, 20);
+        ctx.fillText("Velocity: " + this.stats.Speed, canvas.width - 100, 40);
+        ctx.fillText("Heading: " + this.stats.Heading, canvas.width - 100, 60);
+        ctx.fillText("Distance: " + this.stats.Distance, canvas.width - 100, 80);
+        ctx.fillText("Fuel: " + this.stats.Fuel, canvas.width - 100, 100);
+        ctx.fillText("State: " + this.stats.State, canvas.width - 100, 120);
+    };
+    MissionControl.prototype.updateStats = function () {
+        if (this.statsUpdateFrequence == 0) {
+            var rocket = this.rockets[0];
+            this.stats.Speed = Math.round(rocket.getSpeed() * 100) / 100;
+            this.stats.Heading = Math.round(rocket.getHeading() * 10) / 10;
+            this.stats.Fuel = Math.round(rocket.getFuel() * 10) / 10;
+            this.stats.Distance = Math.round(this.planet.distanceToTarget(rocket.getHitBox()));
+            if (rocket.isCrashed()) {
+                this.stats.State = "Crashed!";
+            }
+            else if (rocket.isSuccess()) {
+                this.stats.State = "Success";
+            }
+            else if (rocket.isGrounded()) {
+                this.stats.State = "On Ground";
+            }
+            else {
+                this.stats.State = "Flying";
+            }
+        }
+        this.statsUpdateFrequence = (this.statsUpdateFrequence + 1) % 10;
     };
     MissionControl.prototype.registerUserInput = function () {
         var _this = this;
@@ -474,6 +628,15 @@ var MissionControl = /** @class */ (function (_super) {
             }
             else if (e.code == 'ArrowUp') {
                 _this.upPressed = true;
+                e.preventDefault();
+            }
+        });
+        document.addEventListener('keypress', function (e) {
+            if (e.defaultPrevented) {
+                return;
+            }
+            if (e.key == "p") {
+                _this.paused = !_this.paused;
                 e.preventDefault();
             }
         });

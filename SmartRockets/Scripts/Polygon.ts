@@ -100,4 +100,14 @@ class Polygon {
         }
         return false;
     }
+
+    public distance(circle: Circle): number {
+        let minDistance = -1;
+        for (let points of this.getPoints()) {
+            let distance = points.distance(circle.getLocation());
+            if (minDistance < 0) minDistance = distance;
+            if (minDistance < distance) minDistance = distance;
+        }
+        return minDistance;
+    }
 }

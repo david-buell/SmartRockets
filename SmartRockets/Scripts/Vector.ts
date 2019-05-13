@@ -3,7 +3,7 @@ class Vector {
     public x: number = 0;
     public y: number = 0;
 
-    constructor(x: number, y: number) {
+    constructor(x: number = 0, y: number = 0) {
         this.set(x, y);
     }
 
@@ -22,8 +22,13 @@ class Vector {
         this.y *= val;
     }
 
-    public distance(v: Vector): number {
-        return Math.abs(Math.sqrt(((v.x - this.x) * (v.x - this.x)) + ((v.y - this.y) * (v.y - this.y))));
+    public distance(v?: Vector): number {
+        if (v) {
+            return Math.abs(Math.sqrt(((v.x - this.x) * (v.x - this.x)) + ((v.y - this.y) * (v.y - this.y))));
+        }
+        else {
+            return Math.abs(Math.sqrt((this.x * this.x) + (this.y * this.y)));
+        }
     }
 
     /** Returns the current heading in radians. */

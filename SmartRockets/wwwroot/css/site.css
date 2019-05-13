@@ -20,8 +20,9 @@ body {
 #canvas {
     margin: 0 auto;
     display: block;
-    background-color: #ECECEC;
+    /*background-color: #ECECEC;*/
     border: 1px solid black;
+    background: url("../images/background.jpg") repeat #ECECEC;
 }
 
 /* Hide/rearrange for smaller screens */

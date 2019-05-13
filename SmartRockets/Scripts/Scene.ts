@@ -5,6 +5,7 @@
  * @author David Buell
  */
 abstract class Scene extends PageContent {
+    protected paused: boolean = false;
 
     constructor() {
         super();
@@ -21,6 +22,9 @@ abstract class Scene extends PageContent {
 
     /** Removes all information fromt the canvas while preserving transformations. */
     private clearCanvas(): void {
+        if (this.paused) return; // don't update the screen if paused.
+
+
         // Store the current transformation matrix
         this.context.save();
 

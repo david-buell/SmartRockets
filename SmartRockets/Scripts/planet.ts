@@ -4,6 +4,7 @@
 class Planet extends PageContent {
 
     private obstacles: Polygon[] = [];
+    private ground: Polygon;
     private target: Circle;
 
     public constructor() {
@@ -13,11 +14,18 @@ class Planet extends PageContent {
 
         // Center rectangle
         let poly = new Polygon();
-        poly.addPoint(new Vector(200, 300));
-        poly.addPoint(new Vector(600, 300));
-        poly.addPoint(new Vector(600, 320));
-        poly.addPoint(new Vector(200, 320));
+        poly.addPoint(new Vector(325, 300));
+        poly.addPoint(new Vector(475, 300));
+        poly.addPoint(new Vector(475, 350));
+        poly.addPoint(new Vector(325, 350));
         this.obstacles.push(poly);
+
+        let poly2 = new Polygon();
+        poly2.addPoint(new Vector(200, 300));
+        poly2.addPoint(new Vector(600, 300));
+        poly2.addPoint(new Vector(600, 320));
+        poly2.addPoint(new Vector(200, 320));
+        //this.obstacles.push(poly2);
 
         let leftWall = new Polygon();
         leftWall.addPoint(new Vector(0, 0));
@@ -33,6 +41,10 @@ class Planet extends PageContent {
         rightWall.addPoint(new Vector(this.canvas.width, 0));
         rightWall.addPoint(new Vector(this.canvas.width, this.canvas.height));
         this.obstacles.push(rightWall);
+
+        this.ground = new Polygon();
+        this.ground.addPoint(new Vector(0, this.canvas.height));
+        this.ground.addPoint(new Vector(this.canvas.width, this.canvas.height));
     }
 
     public collision(p: Polygon): boolean {
@@ -48,13 +60,34 @@ class Planet extends PageContent {
         return p.collisionDetectionCircle(this.target);
     }
 
+    public hitGround(p: Polygon): boolean {
+        return this.ground.collisionDetection(p);
+    }
+
+    public distanceToTarget(p: Polygon): number {
+        return p.distance(this.target);
+    }
+
     public draw(): void {
         let ctx = this.context;
         ctx.save();
 
+        this.drawGround(ctx);
         this.drawTarget();
 
         ctx.restore();
+    }
+
+    private drawGround(ctx: CanvasRenderingContext2D): void {
+        ctx.beginPath();
+        ctx.moveTo(0, this.canvas.height);
+        ctx.lineTo(0, this.canvas.height - 20);
+        ctx.lineTo(this.canvas.width, this.canvas.height - 20);
+        ctx.lineTo(this.canvas.width, this.canvas.height);
+        ctx.lineTo(0, this.canvas.height);
+        ctx.fillStyle = '#00ff66';
+        ctx.fill();
+        ctx.closePath();
     }
 
     private drawTarget(): void {
@@ -63,8 +96,10 @@ class Planet extends PageContent {
         for (let o of this.obstacles) {
             ctx.beginPath();
             o.drawPath(ctx);
-            ctx.fillStyle = '#ffff33';
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.75)';
+            ctx.strokeStyle = '#000';
             ctx.fill();
+            ctx.stroke();
             ctx.closePath();
         }
 
