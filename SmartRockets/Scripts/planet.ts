@@ -1,11 +1,15 @@
 ﻿/// <reference path="PageContent.ts" />
+/// <reference path="Circle.ts" />
 
 class Planet extends PageContent {
 
     private obstacles: Polygon[] = [];
+    private target: Circle;
 
     public constructor() {
         super();
+
+        this.target = new Circle(this.canvas.width / 2, 50, 20);
 
         // Center rectangle
         let poly = new Polygon();
@@ -29,7 +33,6 @@ class Planet extends PageContent {
         rightWall.addPoint(new Vector(this.canvas.width, 0));
         rightWall.addPoint(new Vector(this.canvas.width, this.canvas.height));
         this.obstacles.push(rightWall);
-
     }
 
     public collision(p: Polygon): boolean {
@@ -41,18 +44,20 @@ class Planet extends PageContent {
         return false;
     }
 
+    public hitTarget(p: Polygon): boolean {
+        return p.collisionDetectionCircle(this.target);
+    }
 
     public draw(): void {
         let ctx = this.context;
         ctx.save();
 
-        this.drawTarget(this.canvas.width / 2, 50, 20);
-
+        this.drawTarget();
 
         ctx.restore();
     }
 
-    private drawTarget(x: number, y: number, size: number): void {
+    private drawTarget(): void {
         let ctx = this.context;
 
         for (let o of this.obstacles) {
@@ -64,19 +69,19 @@ class Planet extends PageContent {
         }
 
         ctx.beginPath();
-        ctx.arc(x, y, size, 0, 2 * Math.PI, false);
+        ctx.arc(this.target.getLocation().x, this.target.getLocation().y, this.target.getRadius(), 0, 2 * Math.PI, false);
         ctx.fillStyle = '#3333ff';
         ctx.fill();
         ctx.lineWidth = 1;
         ctx.stroke();
         ctx.closePath();
         ctx.beginPath();
-        ctx.arc(x, y, size - (size / 3), 0, 2 * Math.PI, false);
+        ctx.arc(this.target.getLocation().x, this.target.getLocation().y, this.target.getRadius() - (this.target.getRadius() / 3), 0, 2 * Math.PI, false);
         ctx.fillStyle = '#ff3333';
         ctx.fill();
         ctx.closePath();
         ctx.beginPath();
-        ctx.arc(x, y, size - (2 * (size / 3)), 0, 2 * Math.PI, false);
+        ctx.arc(this.target.getLocation().x, this.target.getLocation().y, this.target.getRadius() - (2 * (this.target.getRadius() / 3)), 0, 2 * Math.PI, false);
         ctx.fillStyle = '#ffff33';
         ctx.fill();
         ctx.closePath();

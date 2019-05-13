@@ -22,6 +22,10 @@ class Vector {
         this.y *= val;
     }
 
+    public distance(v: Vector): number {
+        return Math.abs(Math.sqrt(((v.x - this.x) * (v.x - this.x)) + ((v.y - this.y) * (v.y - this.y))));
+    }
+
     /** Returns the current heading in radians. */
     public heading(): number {
         return Math.atan2(this.y, this.x);

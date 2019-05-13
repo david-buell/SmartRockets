@@ -41,6 +41,9 @@ class MissionControl extends Scene {
             if (this.planet.collision(rocket.getHitBox())) {
                 rocket.destroyed();
             }
+            if (this.planet.hitTarget(rocket.getHitBox())) {
+                rocket.success();                
+            }
         }
     }
 

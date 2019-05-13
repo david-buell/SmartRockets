@@ -5,6 +5,7 @@
 class Rocket extends PageContent {
     private fuel: number = 100;
     private exploded: boolean = false;
+    private succeeded: boolean = false;
 
     private length: number = 43;
     private width: number = 12;
@@ -77,6 +78,10 @@ class Rocket extends PageContent {
         this.exploded = true;
     }
 
+    public success(): void {
+        this.succeeded = true;
+    }
+
     public isDestroyed(): boolean {
         return this.exploded;
     }
@@ -123,15 +128,18 @@ class Rocket extends PageContent {
     }
 
     private applyPhysics(): void {
-        if (this.exploded) return;
+        if (this.succeeded) return;
 
-        this.velocity.add(this.acceleration);
+        // No engines, therefore no acceleration except for gravity.
+        if (!this.exploded) {
+            this.velocity.add(this.acceleration);
+            this.angularVelocity += this.angularAcceleration;
+        }
+
         this.velocity.add(this.gravity);
         this.position.add(this.velocity);
         this.acceleration.set(0, 0);
 
-        // Apply side booster velocity.
-        this.angularVelocity += this.angularAcceleration;
         this.angle += this.angularVelocity;
 
         // Apply drag to the rotation of the rocket.

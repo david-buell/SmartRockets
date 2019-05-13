@@ -20,7 +20,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    };
+    }
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -57,12 +57,65 @@ var Scene = /** @class */ (function (_super) {
     };
     return Scene;
 }(PageContent));
+var Vector = /** @class */ (function () {
+    function Vector(x, y) {
+        this.x = 0;
+        this.y = 0;
+        this.set(x, y);
+    }
+    Vector.prototype.set = function (x, y) {
+        this.x = x;
+        this.y = y;
+    };
+    Vector.prototype.add = function (v) {
+        this.x += v.x;
+        this.y += v.y;
+    };
+    Vector.prototype.multiply = function (val) {
+        this.x *= val;
+        this.y *= val;
+    };
+    Vector.prototype.distance = function (v) {
+        return Math.abs(Math.sqrt(((v.x - this.x) * (v.x - this.x)) + ((v.y - this.y) * (v.y - this.y))));
+    };
+    /** Returns the current heading in radians. */
+    Vector.prototype.heading = function () {
+        return Math.atan2(this.y, this.x);
+    };
+    Vector.prototype.magnitude = function () {
+        return Math.sqrt((this.x * this.x) + (this.y * this.y));
+    };
+    Vector.prototype.isZero = function () {
+        return (this.x == 0 && this.y == 0);
+    };
+    return Vector;
+}());
+/// <reference path="Vector.ts" />
+var Circle = /** @class */ (function () {
+    function Circle(x, y, radius) {
+        if (x === void 0) { x = 0; }
+        if (y === void 0) { y = 0; }
+        if (radius === void 0) { radius = 0; }
+        this.location = new Vector(0, 0);
+        this.radius = 0;
+        this.location.x = x;
+        this.location.y = y;
+        this.radius = radius;
+    }
+    Circle.prototype.getLocation = function () { return this.location; };
+    ;
+    Circle.prototype.getRadius = function () { return this.radius; };
+    ;
+    return Circle;
+}());
 /// <reference path="PageContent.ts" />
+/// <reference path="Circle.ts" />
 var Planet = /** @class */ (function (_super) {
     __extends(Planet, _super);
     function Planet() {
         var _this = _super.call(this) || this;
         _this.obstacles = [];
+        _this.target = new Circle(_this.canvas.width / 2, 50, 20);
         // Center rectangle
         var poly = new Polygon();
         poly.addPoint(new Vector(200, 300));
@@ -93,13 +146,16 @@ var Planet = /** @class */ (function (_super) {
         }
         return false;
     };
+    Planet.prototype.hitTarget = function (p) {
+        return p.collisionDetectionCircle(this.target);
+    };
     Planet.prototype.draw = function () {
         var ctx = this.context;
         ctx.save();
-        this.drawTarget(this.canvas.width / 2, 50, 20);
+        this.drawTarget();
         ctx.restore();
     };
-    Planet.prototype.drawTarget = function (x, y, size) {
+    Planet.prototype.drawTarget = function () {
         var ctx = this.context;
         for (var _i = 0, _a = this.obstacles; _i < _a.length; _i++) {
             var o = _a[_i];
@@ -110,56 +166,28 @@ var Planet = /** @class */ (function (_super) {
             ctx.closePath();
         }
         ctx.beginPath();
-        ctx.arc(x, y, size, 0, 2 * Math.PI, false);
+        ctx.arc(this.target.getLocation().x, this.target.getLocation().y, this.target.getRadius(), 0, 2 * Math.PI, false);
         ctx.fillStyle = '#3333ff';
         ctx.fill();
         ctx.lineWidth = 1;
         ctx.stroke();
         ctx.closePath();
         ctx.beginPath();
-        ctx.arc(x, y, size - (size / 3), 0, 2 * Math.PI, false);
+        ctx.arc(this.target.getLocation().x, this.target.getLocation().y, this.target.getRadius() - (this.target.getRadius() / 3), 0, 2 * Math.PI, false);
         ctx.fillStyle = '#ff3333';
         ctx.fill();
         ctx.closePath();
         ctx.beginPath();
-        ctx.arc(x, y, size - (2 * (size / 3)), 0, 2 * Math.PI, false);
+        ctx.arc(this.target.getLocation().x, this.target.getLocation().y, this.target.getRadius() - (2 * (this.target.getRadius() / 3)), 0, 2 * Math.PI, false);
         ctx.fillStyle = '#ffff33';
         ctx.fill();
         ctx.closePath();
     };
     return Planet;
 }(PageContent));
-var Vector = /** @class */ (function () {
-    function Vector(x, y) {
-        this.x = 0;
-        this.y = 0;
-        this.set(x, y);
-    }
-    Vector.prototype.set = function (x, y) {
-        this.x = x;
-        this.y = y;
-    };
-    Vector.prototype.add = function (v) {
-        this.x += v.x;
-        this.y += v.y;
-    };
-    Vector.prototype.multiply = function (val) {
-        this.x *= val;
-        this.y *= val;
-    };
-    /** Returns the current heading in radians. */
-    Vector.prototype.heading = function () {
-        return Math.atan2(this.y, this.x);
-    };
-    Vector.prototype.magnitude = function () {
-        return Math.sqrt((this.x * this.x) + (this.y * this.y));
-    };
-    Vector.prototype.isZero = function () {
-        return (this.x == 0 && this.y == 0);
-    };
-    return Vector;
-}());
 /// <reference path="PageContent.ts" />
+/// <reference path="Vector.ts" />
+/// <reference path="Circle.ts" />
 var Polygon = /** @class */ (function () {
     function Polygon() {
         this.points = [];
@@ -235,121 +263,17 @@ var Polygon = /** @class */ (function () {
         return true;
     };
     /**
-     * Determines if a polygon and a circle are colliding
-     * @param {Polygon} a The source polygon to test
-     * @param {Circle} b The target circle to test against
-     * @param {Result} [result = null] A Result object on which to store information about the collision
-     * @param {Boolean} [reverse = false] Set to true to reverse a and b in the result parameter when testing circle->polygon instead of polygon->circle
-     * @returns {Boolean}
+     * Inaccurate simplified Polygon - Circle collision detection.
+     * @param circle
      */
-    Polygon.prototype.polygonCircle = function (a, b, result, reverse) {
-        if (result === void 0) { result = null; }
-        if (reverse === void 0) { reverse = false; }
-        var a_coords = a._coords;
-        var a_edges = a._edges;
-        var a_normals = a._normals;
-        var b_x = b.x;
-        var b_y = b.y;
-        var b_radius = b.radius * b.scale;
-        var b_radius2 = b_radius * 2;
-        var radius_squared = b_radius * b_radius;
-        var count = a_coords.length;
-        var a_in_b = true;
-        var b_in_a = true;
-        var overlap = null;
-        var overlap_x = 0;
-        var overlap_y = 0;
-        // Handle points specially
-        if (count === 2) {
-            var coord_x = b_x - a_coords[0];
-            var coord_y = b_y - a_coords[1];
-            var length_squared = coord_x * coord_x + coord_y * coord_y;
-            if (length_squared > radius_squared) {
-                return false;
-            }
-            if (result) {
-                var length_1 = Math.sqrt(length_squared);
-                overlap = b_radius - length_1;
-                overlap_x = coord_x / length_1;
-                overlap_y = coord_y / length_1;
-                b_in_a = false;
+    Polygon.prototype.collisionDetectionCircle = function (circle) {
+        for (var _i = 0, _a = this.getPoints(); _i < _a.length; _i++) {
+            var points = _a[_i];
+            if (points.distance(circle.getLocation()) < circle.getRadius()) {
+                return true;
             }
         }
-        else {
-            for (var ix = 0, iy = 1; ix < count; ix += 2, iy += 2) {
-                var coord_x = b_x - a_coords[ix];
-                var coord_y = b_y - a_coords[iy];
-                var edge_x = a_edges[ix];
-                var edge_y = a_edges[iy];
-                var dot = coord_x * edge_x + coord_y * edge_y;
-                var region = dot < 0 ? -1 : dot > edge_x * edge_x + edge_y * edge_y ? 1 : 0;
-                var tmp_overlapping = false;
-                var tmp_overlap = 0;
-                var tmp_overlap_x = 0;
-                var tmp_overlap_y = 0;
-                if (result && a_in_b && coord_x * coord_x + coord_y * coord_y > radius_squared) {
-                    a_in_b = false;
-                }
-                if (region) {
-                    var left = region === -1;
-                    var other_x = left ? (ix === 0 ? count - 2 : ix - 2) : (ix === count - 2 ? 0 : ix + 2);
-                    var other_y = other_x + 1;
-                    var coord2_x = b_x - a_coords[other_x];
-                    var coord2_y = b_y - a_coords[other_y];
-                    var edge2_x = a_edges[other_x];
-                    var edge2_y = a_edges[other_y];
-                    var dot2 = coord2_x * edge2_x + coord2_y * edge2_y;
-                    var region2 = dot2 < 0 ? -1 : dot2 > edge2_x * edge2_x + edge2_y * edge2_y ? 1 : 0;
-                    if (region2 === -region) {
-                        var target_x = left ? coord_x : coord2_x;
-                        var target_y = left ? coord_y : coord2_y;
-                        var length_squared = target_x * target_x + target_y * target_y;
-                        if (length_squared > radius_squared) {
-                            return false;
-                        }
-                        if (result) {
-                            var length_2 = Math.sqrt(length_squared);
-                            tmp_overlapping = true;
-                            tmp_overlap = b_radius - length_2;
-                            tmp_overlap_x = target_x / length_2;
-                            tmp_overlap_y = target_y / length_2;
-                            b_in_a = false;
-                        }
-                    }
-                }
-                else {
-                    var normal_x = a_normals[ix];
-                    var normal_y = a_normals[iy];
-                    var length_3 = coord_x * normal_x + coord_y * normal_y;
-                    var absolute_length = length_3 < 0 ? -length_3 : length_3;
-                    if (length_3 > 0 && absolute_length > b_radius) {
-                        return false;
-                    }
-                    if (result) {
-                        tmp_overlapping = true;
-                        tmp_overlap = b_radius - length_3;
-                        tmp_overlap_x = normal_x;
-                        tmp_overlap_y = normal_y;
-                        if (b_in_a && length_3 >= 0 || tmp_overlap < b_radius2) {
-                            b_in_a = false;
-                        }
-                    }
-                }
-                if (tmp_overlapping && (overlap === null || overlap > tmp_overlap)) {
-                    overlap = tmp_overlap;
-                    overlap_x = tmp_overlap_x;
-                    overlap_y = tmp_overlap_y;
-                }
-            }
-        }
-        if (result) {
-            result.a_in_b = reverse ? b_in_a : a_in_b;
-            result.b_in_a = reverse ? a_in_b : b_in_a;
-            result.overlap = overlap;
-            result.overlap_x = reverse ? -overlap_x : overlap_x;
-            result.overlap_y = reverse ? -overlap_y : overlap_y;
-        }
-        return true;
+        return false;
     };
     return Polygon;
 }());
@@ -362,6 +286,7 @@ var Rocket = /** @class */ (function (_super) {
         var _this = _super.call(this) || this;
         _this.fuel = 100;
         _this.exploded = false;
+        _this.succeeded = false;
         _this.length = 43;
         _this.width = 12;
         _this.mainBoosterPower = 0.1;
@@ -418,6 +343,9 @@ var Rocket = /** @class */ (function (_super) {
     Rocket.prototype.destroyed = function () {
         this.exploded = true;
     };
+    Rocket.prototype.success = function () {
+        this.succeeded = true;
+    };
     Rocket.prototype.isDestroyed = function () {
         return this.exploded;
     };
@@ -454,14 +382,16 @@ var Rocket = /** @class */ (function (_super) {
         ctx.restore();
     };
     Rocket.prototype.applyPhysics = function () {
-        if (this.exploded)
+        if (this.succeeded)
             return;
-        this.velocity.add(this.acceleration);
+        // No engines, therefore no acceleration except for gravity.
+        if (!this.exploded) {
+            this.velocity.add(this.acceleration);
+            this.angularVelocity += this.angularAcceleration;
+        }
         this.velocity.add(this.gravity);
         this.position.add(this.velocity);
         this.acceleration.set(0, 0);
-        // Apply side booster velocity.
-        this.angularVelocity += this.angularAcceleration;
         this.angle += this.angularVelocity;
         // Apply drag to the rotation of the rocket.
         if (this.angularVelocity > 0) {
@@ -522,6 +452,9 @@ var MissionControl = /** @class */ (function (_super) {
             rocket.draw();
             if (this.planet.collision(rocket.getHitBox())) {
                 rocket.destroyed();
+            }
+            if (this.planet.hitTarget(rocket.getHitBox())) {
+                rocket.success();
             }
         }
     };
