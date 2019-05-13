@@ -13,6 +13,7 @@
     <None Remove="Scripts\Engine.ts" />
     <None Remove="Scripts\PageContent.ts" />
     <None Remove="Scripts\planet.ts" />
+    <None Remove="Scripts\Polygon.ts" />
     <None Remove="Scripts\Rocket.ts" />
     <None Remove="Scripts\Scene.ts" />
     <None Remove="Scripts\Vector.ts" />
@@ -31,6 +32,7 @@
   <ItemGroup>
     <TypeScriptCompile Include="Scripts\Engine.ts" />
     <TypeScriptCompile Include="Scripts\Planet.ts" />
+    <TypeScriptCompile Include="Scripts\Polygon.ts" />
     <TypeScriptCompile Include="Scripts\Scene.ts" />
     <TypeScriptCompile Include="Scripts\MissionControl.ts" />
     <TypeScriptCompile Include="Scripts\PageContent.ts" />

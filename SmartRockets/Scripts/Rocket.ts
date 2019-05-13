@@ -1,10 +1,13 @@
 ﻿/// <reference path="PageContent.ts" />
 /// <reference path="Vector.ts" />
+/// <reference path="Polygon.ts" />
 
 class Rocket extends PageContent {
-    private fuel: number = 30;
+    private fuel: number = 100;
+    private exploded: boolean = false;
 
     private length: number = 43;
+    private width: number = 12;
     private mainBoosterPower: number = 0.1;
     private sideBoosterPower: number = 0.001;
     private angularDrag: number = 0.00005;
@@ -17,7 +20,9 @@ class Rocket extends PageContent {
     private angularAcceleration: number = 0;
 
     private gravity: Vector = new Vector(0, 0);
-    private heading: number = -90 * Math.PI / 180;
+    private angle: number = 0;
+
+    private readonly RIGHT_ANGLE_RADIANS: number = 1.5708; //(90 * Math.PI / 180) 
 
     private pic : HTMLImageElement = new Image();
     private picLoaded : boolean = false;
@@ -46,7 +51,7 @@ class Rocket extends PageContent {
                 this.fuel -= power;
             }
 
-            let thrust = new Vector(Math.cos(this.heading) * power, Math.sin(this.heading) * power);
+            let thrust = new Vector(Math.cos(this.angle - this.RIGHT_ANGLE_RADIANS) * power, Math.sin(this.angle - this.RIGHT_ANGLE_RADIANS) * power);
             this.acceleration.add(thrust);
         }
         else {
@@ -68,6 +73,14 @@ class Rocket extends PageContent {
         }
     }
 
+    public destroyed(): void {
+        this.exploded = true;
+    }
+
+    public isDestroyed(): boolean {
+        return this.exploded;
+    }
+
     public setGravity(magnitude: number): void {
         this.gravity.set(0, -magnitude);
     }
@@ -75,25 +88,43 @@ class Rocket extends PageContent {
     public ready() : boolean {
         return this.picLoaded;
     }
+
+    public getHitBox(): Polygon {
+        let cos = Math.cos(this.angle);
+        let sin = Math.sin(this.angle);
+
+        let hitBoxBottomLeft = new Vector(this.position.x, this.position.y);
+        let hitBoxTopLeft = new Vector(this.position.x + sin * this.length, this.position.y - cos * this.length);
+        let hitBoxBottomRight = new Vector(this.position.x + cos * this.width, this.position.y + sin * this.width);
+        let hitBoxTopRight = new Vector(hitBoxTopLeft.x + hitBoxBottomRight.x - hitBoxBottomLeft.x, hitBoxTopLeft.y - hitBoxBottomLeft.y + hitBoxBottomRight.y);
+
+        let polygon = new Polygon();
+        polygon.addPoint(hitBoxBottomLeft);
+        polygon.addPoint(hitBoxTopLeft);
+        polygon.addPoint(hitBoxTopRight);
+        polygon.addPoint(hitBoxBottomRight);
+        return polygon;
+    }
     
     public draw() : void {
-        if (!this.ready()) {
-            return;
-        }
+        if (!this.ready()) return;
+
+        this.applyPhysics();
 
         let ctx = this.context;
         ctx.save();
-
+        
         ctx.translate(this.position.x, this.position.y);
-        ctx.rotate(this.heading + (90 * Math.PI / 180));
+        ctx.rotate(this.angle);
         ctx.translate(0, -this.length);
         ctx.drawImage(this.pic, 0, 0);
 
-        this.applyPhysics();
         ctx.restore();
     }
 
     private applyPhysics(): void {
+        if (this.exploded) return;
+
         this.velocity.add(this.acceleration);
         this.velocity.add(this.gravity);
         this.position.add(this.velocity);
@@ -101,7 +132,7 @@ class Rocket extends PageContent {
 
         // Apply side booster velocity.
         this.angularVelocity += this.angularAcceleration;
-        this.heading += this.angularVelocity;
+        this.angle += this.angularVelocity;
 
         // Apply drag to the rotation of the rocket.
         if (this.angularVelocity > 0) {

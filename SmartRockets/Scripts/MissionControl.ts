@@ -26,18 +26,21 @@ class MissionControl extends Scene {
 
     protected draw() : void {
         this.planet.draw();
-        for (let i of this.rockets) {
+        for (let rocket of this.rockets) {
             if (this.upPressed) {
-                i.fireEngine(Engine.Main);
+                rocket.fireEngine(Engine.Main);
             }
             if (this.leftPressed) {
-                i.fireEngine(Engine.LeftThruster);
+                rocket.fireEngine(Engine.LeftThruster);
             }
             if (this.rightPressed) {
-                i.fireEngine(Engine.RightThruster);
+                rocket.fireEngine(Engine.RightThruster);
             }
 
-            i.draw();
+            rocket.draw();
+            if (this.planet.collision(rocket.getHitBox())) {
+                rocket.destroyed();
+            }
         }
     }
 
