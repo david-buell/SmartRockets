@@ -3,6 +3,7 @@
 /// <reference path="Polygon.ts" />
 
 class Rocket extends PageContent {
+    private id: number = 0;
     private fuel: number = 100;
     private crashed: boolean = false;
     private success: boolean = false;
@@ -24,6 +25,8 @@ class Rocket extends PageContent {
     private gravity: Vector = new Vector();
     private angle: number = 0;
 
+    public fitness: number = 0;
+
     private readonly RIGHT_ANGLE_RADIANS: number = 1.5708; //(90 * Math.PI / 180) 
     private readonly RAD_TO_DEG: number = 57.2958; //(180 / Math.PI) 
 
@@ -31,15 +34,19 @@ class Rocket extends PageContent {
     private picLoaded : boolean = false;
 
 
-    constructor() {
+    constructor(id: number = 0) {
         super();
-
-        this.position.set(this.canvas.width / 2, this.canvas.height);
+        this.id = id;
+        this.position.set(this.canvas.width / 2, this.canvas.height - 5);
 
         this.pic.src = '../images/rocket_sm3.png';
         this.pic.onload = () => {
             this.picLoaded = true;
         }
+    }
+
+    public getId(): number {
+        return this.id;
     }
 
     public fireEngine(d: Engine): void {
@@ -88,6 +95,7 @@ class Rocket extends PageContent {
     }
 
     public setOnGround(): void {
+        this.crashed = true;
         this.velocity.set(0, 0);
         this.angularVelocity = 0;
         this.grounded = true;
@@ -109,8 +117,20 @@ class Rocket extends PageContent {
         return this.crashed;
     }
 
+    public isComplete(): boolean {
+        return this.crashed || this.success;
+    }
+
     public setGravity(magnitude: number): void {
         this.gravity.set(0, -magnitude);
+    }
+
+    public setFitness(fitness: number): void {
+        this.fitness = fitness;
+    }
+
+    public getFitness(): number {
+        return this.fitness;
     }
 
     public ready() : boolean {

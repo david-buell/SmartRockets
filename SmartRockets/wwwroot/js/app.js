@@ -78,7 +78,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -125,6 +125,7 @@ var Planet = /** @class */ (function (_super) {
     function Planet() {
         var _this = _super.call(this) || this;
         _this.obstacles = [];
+        _this.gravity = -0.02;
         _this.target = new Circle(_this.canvas.width / 2, 50, 20);
         // Center rectangle
         var poly = new Polygon();
@@ -173,6 +174,9 @@ var Planet = /** @class */ (function (_super) {
     };
     Planet.prototype.distanceToTarget = function (p) {
         return p.distance(this.target);
+    };
+    Planet.prototype.getGravity = function () {
+        return this.gravity;
     };
     Planet.prototype.draw = function () {
         var ctx = this.context;
@@ -333,8 +337,10 @@ var Polygon = /** @class */ (function () {
 /// <reference path="Polygon.ts" />
 var Rocket = /** @class */ (function (_super) {
     __extends(Rocket, _super);
-    function Rocket() {
+    function Rocket(id) {
+        if (id === void 0) { id = 0; }
         var _this = _super.call(this) || this;
+        _this.id = 0;
         _this.fuel = 100;
         _this.crashed = false;
         _this.success = false;
@@ -351,17 +357,22 @@ var Rocket = /** @class */ (function (_super) {
         _this.angularAcceleration = 0;
         _this.gravity = new Vector();
         _this.angle = 0;
+        _this.fitness = 0;
         _this.RIGHT_ANGLE_RADIANS = 1.5708; //(90 * Math.PI / 180) 
         _this.RAD_TO_DEG = 57.2958; //(180 / Math.PI) 
         _this.pic = new Image();
         _this.picLoaded = false;
-        _this.position.set(_this.canvas.width / 2, _this.canvas.height);
+        _this.id = id;
+        _this.position.set(_this.canvas.width / 2, _this.canvas.height - 5);
         _this.pic.src = '../images/rocket_sm3.png';
         _this.pic.onload = function () {
             _this.picLoaded = true;
         };
         return _this;
     }
+    Rocket.prototype.getId = function () {
+        return this.id;
+    };
     Rocket.prototype.fireEngine = function (d) {
         if (this.crashed)
             return; // Engines can't fire if the rocket is destroyed.
@@ -404,6 +415,7 @@ var Rocket = /** @class */ (function (_super) {
         }
     };
     Rocket.prototype.setOnGround = function () {
+        this.crashed = true;
         this.velocity.set(0, 0);
         this.angularVelocity = 0;
         this.grounded = true;
@@ -420,8 +432,17 @@ var Rocket = /** @class */ (function (_super) {
     Rocket.prototype.isCrashed = function () {
         return this.crashed;
     };
+    Rocket.prototype.isComplete = function () {
+        return this.crashed || this.success;
+    };
     Rocket.prototype.setGravity = function (magnitude) {
         this.gravity.set(0, -magnitude);
+    };
+    Rocket.prototype.setFitness = function (fitness) {
+        this.fitness = fitness;
+    };
+    Rocket.prototype.getFitness = function () {
+        return this.fitness;
     };
     Rocket.prototype.ready = function () {
         return this.picLoaded;
@@ -505,15 +526,83 @@ var Stats = /** @class */ (function () {
         this.Speed = 0;
         this.Heading = 0;
         this.Fuel = 0;
-        this.Distance = 0;
+        this.Fitness = 0;
         this.State = "";
+        this.populationSize = 0;
+        this.generation = 1;
+        this.generationBestFit = 0;
+        this.overallBestFit = 0;
     }
     return Stats;
+}());
+var Command;
+(function (Command) {
+    Command[Command["Wait"] = 0] = "Wait";
+    Command[Command["MainEngine"] = 1] = "MainEngine";
+    Command[Command["LeftThruster"] = 2] = "LeftThruster";
+    Command[Command["RightThruster"] = 3] = "RightThruster";
+})(Command || (Command = {}));
+/// <reference path="Command.ts" />
+var DNA = /** @class */ (function () {
+    function DNA(genes) {
+        if (genes === void 0) { genes = undefined; }
+        this.genes = [];
+        if (genes) {
+            this.genes = genes;
+        }
+        else {
+            for (var i = 0; i < 1000; i++) {
+                this.genes.push(this.randomCommand());
+            }
+        }
+    }
+    DNA.prototype.randomCommand = function () {
+        var num = Math.floor(Math.random() * 4) + 1;
+        if (num == 1) {
+            return Command.Wait;
+        }
+        else if (num == 2) {
+            return Command.MainEngine;
+        }
+        else if (num == 3) {
+            return Command.LeftThruster;
+        }
+        else if (num == 4) {
+            return Command.RightThruster;
+        }
+    };
+    /**
+     * Make a child out of two DNA objects.
+     * @param partner
+     */
+    DNA.prototype.crossover = function (partner, lastFrame) {
+        var childGenes = [];
+        var mid = Math.floor(Math.random() * lastFrame); // choose a midpoint within the number of frames that was ran.
+        for (var i = 0; i < this.genes.length; i++) {
+            if (i > mid) {
+                childGenes.push(this.genes[i]);
+            }
+            else {
+                childGenes.push(partner.genes[i]);
+            }
+        }
+        return new DNA(childGenes);
+    };
+    DNA.prototype.mutation = function (percent) {
+        if (percent === void 0) { percent = 0.01; }
+        for (var i = 0; i < this.genes.length; i++) {
+            if (Math.random() < percent) {
+                this.genes[i] = this.randomCommand();
+            }
+        }
+    };
+    return DNA;
 }());
 /// <reference path="Scene.ts" />
 /// <reference path="Planet.ts" />
 /// <reference path="Rocket.ts" />
 /// <reference path="Stats.ts" />
+/// <reference path="DNA.ts" />
 /**
  * Handles the coordination and launching of all rockets. Provides the rockets with new instructions.
  * @author David Buell
@@ -524,32 +613,38 @@ var MissionControl = /** @class */ (function (_super) {
         var _this = _super.call(this) || this;
         _this.planet = new Planet();
         _this.rockets = [];
+        _this.dnaStrands = [];
+        _this.matingpool = [];
         _this.stats = new Stats();
+        _this.useAI = true;
+        _this.mutationPercentage = 0.01;
         _this.upPressed = false;
         _this.leftPressed = false;
         _this.rightPressed = false;
+        _this.frame = 0;
         _this.statsUpdateFrequence = 0;
         _this.registerUserInput();
-        var rocket = new Rocket();
-        rocket.setGravity(-0.02);
-        _this.rockets.push(rocket);
+        for (var i = 0; i < 20; i++) {
+            var rocket = new Rocket(i);
+            rocket.setGravity(_this.planet.getGravity());
+            _this.rockets.push(rocket);
+            var dna = new DNA();
+            _this.dnaStrands.push(dna);
+        }
         return _this;
     }
     MissionControl.prototype.draw = function () {
         if (this.paused)
             return;
         this.planet.draw();
+        var complete = true;
         for (var _i = 0, _a = this.rockets; _i < _a.length; _i++) {
             var rocket = _a[_i];
-            if (this.upPressed) {
-                rocket.fireEngine(Engine.Main);
+            if (!rocket.isComplete()) {
+                complete = false;
             }
-            if (this.leftPressed) {
-                rocket.fireEngine(Engine.LeftThruster);
-            }
-            if (this.rightPressed) {
-                rocket.fireEngine(Engine.RightThruster);
-            }
+            this.calcFitness(rocket);
+            this.issueCommands(rocket);
             rocket.draw();
             if (this.planet.hitTarget(rocket.getHitBox())) {
                 rocket.setSuccess();
@@ -562,52 +657,176 @@ var MissionControl = /** @class */ (function (_super) {
             }
         }
         this.drawStats();
+        this.frame++;
+        if (complete && this.useAI) {
+            this.nextSimulation();
+            this.frame = 0;
+        }
+    };
+    MissionControl.prototype.issueCommands = function (rocket) {
+        if (this.useAI) {
+            var dna = this.dnaStrands[rocket.getId()];
+            var command = dna.genes[this.frame];
+            if (command == Command.MainEngine)
+                rocket.fireEngine(Engine.Main);
+            if (command == Command.LeftThruster)
+                rocket.fireEngine(Engine.LeftThruster);
+            if (command == Command.RightThruster)
+                rocket.fireEngine(Engine.RightThruster);
+        }
+        else {
+            if (this.upPressed) {
+                rocket.fireEngine(Engine.Main);
+            }
+            if (this.leftPressed) {
+                rocket.fireEngine(Engine.LeftThruster);
+            }
+            if (this.rightPressed) {
+                rocket.fireEngine(Engine.RightThruster);
+            }
+        }
+    };
+    MissionControl.prototype.calcFitness = function (rocket) {
+        var distance = Math.round(this.planet.distanceToTarget(rocket.getHitBox()));
+        var fitness = this.canvas.height * 2 - distance;
+        if (rocket.isSuccess()) {
+            fitness *= 10;
+        }
+        else if (rocket.isCrashed()) {
+            fitness /= 10;
+        }
+        if (rocket.getFitness() < fitness) {
+            rocket.setFitness(fitness);
+        }
+        return fitness;
+    };
+    MissionControl.prototype.nextSimulation = function () {
+        this.stats.generation++;
+        var maxfit = 0;
+        for (var _i = 0, _a = this.rockets; _i < _a.length; _i++) {
+            var rocket = _a[_i];
+            if (rocket.getFitness() > maxfit) {
+                maxfit = rocket.getFitness();
+            }
+        }
+        // normalize fitness between zero and 1.
+        for (var _b = 0, _c = this.rockets; _b < _c.length; _b++) {
+            var rocket = _c[_b];
+            rocket.setFitness(rocket.getFitness() / maxfit);
+        }
+        this.matingpool = [];
+        for (var _d = 0, _e = this.rockets; _d < _e.length; _d++) {
+            var rocket = _e[_d];
+            var dna = this.dnaStrands[rocket.getId()];
+            var n = rocket.getFitness() * 100;
+            for (var j = 0; j < n; j++) {
+                this.matingpool.push(dna);
+            }
+        }
+        this.selection();
+    };
+    MissionControl.prototype.selection = function () {
+        var newDna = [];
+        for (var i = 0; i < this.rockets.length; i++) {
+            var randomIndexA = Math.floor(Math.random() * this.matingpool.length);
+            var parentA = this.matingpool[randomIndexA];
+            var randomIndexB = Math.floor(Math.random() * this.matingpool.length);
+            var parentB = this.matingpool[randomIndexB];
+            var child = parentA.crossover(parentB, this.frame);
+            child.mutation();
+            newDna.push(child);
+            this.rockets[i] = new Rocket(i);
+            this.rockets[i].setGravity(this.planet.getGravity());
+        }
+        this.dnaStrands = newDna;
     };
     MissionControl.prototype.drawStats = function () {
         var ctx = this.context;
         var canvas = this.canvas;
         this.updateStats();
-        // Status background.
-        ctx.beginPath();
-        ctx.moveTo(canvas.width - 110, 0);
-        ctx.lineTo(canvas.width - 0, 0);
-        ctx.lineTo(canvas.width - 0, 130);
-        ctx.lineTo(canvas.width - 110, 130);
-        ctx.lineTo(canvas.width - 110, 0);
-        ctx.fillStyle = 'rgba(41, 153, 43, 0.9)';
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = '#000';
-        ctx.fill();
-        ctx.stroke();
-        ctx.closePath();
-        // Status Text
-        ctx.font = "12px Helvetica";
-        ctx.fillStyle = '#fff';
-        ctx.fillText("Mission Control", canvas.width - 100, 20);
-        ctx.fillText("Velocity: " + this.stats.Speed, canvas.width - 100, 40);
-        ctx.fillText("Heading: " + this.stats.Heading, canvas.width - 100, 60);
-        ctx.fillText("Distance: " + this.stats.Distance, canvas.width - 100, 80);
-        ctx.fillText("Fuel: " + this.stats.Fuel, canvas.width - 100, 100);
-        ctx.fillText("State: " + this.stats.State, canvas.width - 100, 120);
+        if (this.useAI) {
+            // Status background.
+            ctx.beginPath();
+            ctx.moveTo(canvas.width - 130, 0);
+            ctx.lineTo(canvas.width - 0, 0);
+            ctx.lineTo(canvas.width - 0, 130);
+            ctx.lineTo(canvas.width - 130, 130);
+            ctx.lineTo(canvas.width - 130, 0);
+            ctx.fillStyle = 'rgba(41, 153, 43, 0.9)';
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = '#000';
+            ctx.fill();
+            ctx.stroke();
+            ctx.closePath();
+            // Status Text
+            ctx.font = "12px Helvetica";
+            ctx.fillStyle = '#fff';
+            ctx.fillText("Mission Control", canvas.width - 120, 20);
+            ctx.fillText("Generation: " + this.stats.generation, canvas.width - 120, 40);
+            ctx.fillText("Population Size: " + this.stats.populationSize, canvas.width - 120, 60);
+            ctx.fillText("Mutation%: " + this.mutationPercentage, canvas.width - 120, 80);
+            ctx.fillText("Max Fit: " + this.stats.generationBestFit, canvas.width - 120, 100);
+            ctx.fillText("Overall Max Fit: " + this.stats.overallBestFit, canvas.width - 120, 120);
+        }
+        else {
+            // Status background.
+            ctx.beginPath();
+            ctx.moveTo(canvas.width - 110, 0);
+            ctx.lineTo(canvas.width - 0, 0);
+            ctx.lineTo(canvas.width - 0, 130);
+            ctx.lineTo(canvas.width - 110, 130);
+            ctx.lineTo(canvas.width - 110, 0);
+            ctx.fillStyle = 'rgba(41, 153, 43, 0.9)';
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = '#000';
+            ctx.fill();
+            ctx.stroke();
+            ctx.closePath();
+            // Status Text
+            ctx.font = "12px Helvetica";
+            ctx.fillStyle = '#fff';
+            ctx.fillText("Mission Control", canvas.width - 100, 20);
+            ctx.fillText("Velocity: " + this.stats.Speed, canvas.width - 100, 40);
+            ctx.fillText("Heading: " + this.stats.Heading, canvas.width - 100, 60);
+            ctx.fillText("Fitness: " + this.stats.Fitness, canvas.width - 100, 80);
+            ctx.fillText("Fuel: " + this.stats.Fuel, canvas.width - 100, 100);
+            ctx.fillText("State: " + this.stats.State, canvas.width - 100, 120);
+        }
     };
     MissionControl.prototype.updateStats = function () {
         if (this.statsUpdateFrequence == 0) {
-            var rocket = this.rockets[0];
-            this.stats.Speed = Math.round(rocket.getSpeed() * 100) / 100;
-            this.stats.Heading = Math.round(rocket.getHeading() * 10) / 10;
-            this.stats.Fuel = Math.round(rocket.getFuel() * 10) / 10;
-            this.stats.Distance = Math.round(this.planet.distanceToTarget(rocket.getHitBox()));
-            if (rocket.isCrashed()) {
-                this.stats.State = "Crashed!";
-            }
-            else if (rocket.isSuccess()) {
-                this.stats.State = "Success";
-            }
-            else if (rocket.isGrounded()) {
-                this.stats.State = "On Ground";
+            if (this.useAI) {
+                var bestFit = 0;
+                for (var _i = 0, _a = this.rockets; _i < _a.length; _i++) {
+                    var rocket = _a[_i];
+                    if (rocket.getFitness() > bestFit) {
+                        bestFit = rocket.getFitness();
+                    }
+                }
+                if (this.stats.overallBestFit < bestFit) {
+                    this.stats.overallBestFit = bestFit;
+                }
+                this.stats.populationSize = this.rockets.length;
+                this.stats.generationBestFit = bestFit;
             }
             else {
-                this.stats.State = "Flying";
+                var rocket = this.rockets[0];
+                this.stats.Speed = Math.round(rocket.getSpeed() * 100) / 100;
+                this.stats.Heading = Math.round(rocket.getHeading() * 10) / 10;
+                this.stats.Fuel = Math.round(rocket.getFuel() * 10) / 10;
+                this.stats.Fitness = rocket.getFitness();
+                if (rocket.isCrashed()) {
+                    this.stats.State = "Crashed!";
+                }
+                else if (rocket.isSuccess()) {
+                    this.stats.State = "Success";
+                }
+                else if (rocket.isGrounded()) {
+                    this.stats.State = "On Ground";
+                }
+                else {
+                    this.stats.State = "Flying";
+                }
             }
         }
         this.statsUpdateFrequence = (this.statsUpdateFrequence + 1) % 10;

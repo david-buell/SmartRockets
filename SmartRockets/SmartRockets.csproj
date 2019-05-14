@@ -11,6 +11,8 @@
 
   <ItemGroup>
     <None Remove="Scripts\Circle.ts" />
+    <None Remove="Scripts\Command.ts" />
+    <None Remove="Scripts\DNA.ts" />
     <None Remove="Scripts\Engine.ts" />
     <None Remove="Scripts\PageContent.ts" />
     <None Remove="Scripts\planet.ts" />
@@ -28,6 +30,8 @@
 
   <ItemGroup>
     <TypeScriptCompile Include="Scripts\Circle.ts" />
+    <TypeScriptCompile Include="Scripts\Command.ts" />
+    <TypeScriptCompile Include="Scripts\DNA.ts" />
     <TypeScriptCompile Include="Scripts\Engine.ts" />
     <TypeScriptCompile Include="Scripts\Planet.ts" />
     <TypeScriptCompile Include="Scripts\Polygon.ts" />

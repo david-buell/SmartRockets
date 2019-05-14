@@ -6,6 +6,7 @@ class Planet extends PageContent {
     private obstacles: Polygon[] = [];
     private ground: Polygon;
     private target: Circle;
+    private gravity = -0.02;
 
     public constructor() {
         super();
@@ -66,6 +67,10 @@ class Planet extends PageContent {
 
     public distanceToTarget(p: Polygon): number {
         return p.distance(this.target);
+    }
+
+    public getGravity(): number {
+        return this.gravity;
     }
 
     public draw(): void {
