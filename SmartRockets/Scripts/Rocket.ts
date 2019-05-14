@@ -4,7 +4,8 @@
 
 class Rocket extends PageContent {
     private id: number = 0;
-    private fuel: number = 100;
+    private fuelCapacity: number = 100;
+    private fuel: number = this.fuelCapacity;
     private crashed: boolean = false;
     private success: boolean = false;
     private grounded: boolean = true;
@@ -168,6 +169,10 @@ class Rocket extends PageContent {
 
     public getFuel(): number {
         return this.fuel;
+    }
+
+    public getFuelCapacity(): number {
+        return this.fuelCapacity;
     }
     
     public draw() : void {

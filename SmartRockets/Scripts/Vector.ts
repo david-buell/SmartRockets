@@ -24,7 +24,7 @@ class Vector {
 
     public distance(v?: Vector): number {
         if (v) {
-            return Math.abs(Math.sqrt(((v.x - this.x) * (v.x - this.x)) + ((v.y - this.y) * (v.y - this.y))));
+            return Math.abs(Math.sqrt(Math.pow(v.x - this.x, 2) + Math.pow(v.y - this.y, 2)));
         }
         else {
             return Math.abs(Math.sqrt((this.x * this.x) + (this.y * this.y)));

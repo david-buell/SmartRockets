@@ -20,7 +20,7 @@ var Vector = /** @class */ (function () {
     };
     Vector.prototype.distance = function (v) {
         if (v) {
-            return Math.abs(Math.sqrt(((v.x - this.x) * (v.x - this.x)) + ((v.y - this.y) * (v.y - this.y))));
+            return Math.abs(Math.sqrt(Math.pow(v.x - this.x, 2) + Math.pow(v.y - this.y, 2)));
         }
         else {
             return Math.abs(Math.sqrt((this.x * this.x) + (this.y * this.y)));
@@ -56,6 +56,69 @@ var Circle = /** @class */ (function () {
     ;
     return Circle;
 }());
+var Command;
+(function (Command) {
+    Command[Command["Wait"] = 0] = "Wait";
+    Command[Command["MainEngine"] = 1] = "MainEngine";
+    Command[Command["LeftThruster"] = 2] = "LeftThruster";
+    Command[Command["RightThruster"] = 3] = "RightThruster";
+})(Command || (Command = {}));
+/// <reference path="Command.ts" />
+var DNA = /** @class */ (function () {
+    function DNA(genes) {
+        if (genes === void 0) { genes = undefined; }
+        this.genes = [];
+        if (genes) {
+            this.genes = genes;
+        }
+        else {
+            for (var i = 0; i < 1000; i++) {
+                this.genes.push(this.randomCommand());
+            }
+        }
+    }
+    DNA.prototype.randomCommand = function () {
+        var num = Math.floor(Math.random() * 4) + 1;
+        if (num == 1) {
+            return Command.Wait;
+        }
+        else if (num == 2) {
+            return Command.MainEngine;
+        }
+        else if (num == 3) {
+            return Command.LeftThruster;
+        }
+        else if (num == 4) {
+            return Command.RightThruster;
+        }
+    };
+    /**
+     * Make a child out of two DNA objects.
+     * @param partner
+     */
+    DNA.prototype.crossover = function (partner, lastFrame) {
+        var childGenes = [];
+        var mid = Math.floor(Math.random() * lastFrame); // choose a midpoint within the number of frames that was ran.
+        for (var i = 0; i < this.genes.length; i++) {
+            if (i > mid) {
+                childGenes.push(this.genes[i]);
+            }
+            else {
+                childGenes.push(partner.genes[i]);
+            }
+        }
+        return new DNA(childGenes);
+    };
+    DNA.prototype.mutation = function (percent) {
+        if (percent === void 0) { percent = 0.01; }
+        for (var i = 0; i < this.genes.length; i++) {
+            if (Math.random() < percent) {
+                this.genes[i] = this.randomCommand();
+            }
+        }
+    };
+    return DNA;
+}());
 var Engine;
 (function (Engine) {
     Engine[Engine["Main"] = 0] = "Main";
@@ -71,55 +134,21 @@ var PageContent = /** @class */ (function () {
     }
     return PageContent;
 }());
-/// <reference path="PageContent.ts" />>
+/// <reference path="PageContent.ts" />
+/// <reference path="Circle.ts" />
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    };
+    }
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-/**
- * Provides a draw method to use for animations.
- * @author David Buell
- */
-var Scene = /** @class */ (function (_super) {
-    __extends(Scene, _super);
-    function Scene() {
-        var _this = _super.call(this) || this;
-        _this.paused = false;
-        window.requestAnimationFrame(function () { return _this.animate(); });
-        return _this;
-    }
-    /** Creates an event loop and handles cleanup to allow for draw() to work on the canvas. */
-    Scene.prototype.animate = function () {
-        var _this = this;
-        this.clearCanvas();
-        this.draw();
-        window.requestAnimationFrame(function () { return _this.animate(); });
-    };
-    /** Removes all information fromt the canvas while preserving transformations. */
-    Scene.prototype.clearCanvas = function () {
-        if (this.paused)
-            return; // don't update the screen if paused.
-        // Store the current transformation matrix
-        this.context.save();
-        // Use the identity matrix while clearing the canvas
-        this.context.setTransform(1, 0, 0, 1, 0, 0);
-        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        // Restore the transform
-        this.context.restore();
-    };
-    return Scene;
-}(PageContent));
-/// <reference path="PageContent.ts" />
-/// <reference path="Circle.ts" />
 var Planet = /** @class */ (function (_super) {
     __extends(Planet, _super);
     function Planet() {
@@ -332,6 +361,40 @@ var Polygon = /** @class */ (function () {
     };
     return Polygon;
 }());
+/// <reference path="PageContent.ts" />>
+/**
+ * Provides a draw method to use for animations.
+ * @author David Buell
+ */
+var Scene = /** @class */ (function (_super) {
+    __extends(Scene, _super);
+    function Scene() {
+        var _this = _super.call(this) || this;
+        _this.paused = false;
+        window.requestAnimationFrame(function () { return _this.animate(); });
+        return _this;
+    }
+    /** Creates an event loop and handles cleanup to allow for draw() to work on the canvas. */
+    Scene.prototype.animate = function () {
+        var _this = this;
+        this.clearCanvas();
+        this.draw();
+        window.requestAnimationFrame(function () { return _this.animate(); });
+    };
+    /** Removes all information fromt the canvas while preserving transformations. */
+    Scene.prototype.clearCanvas = function () {
+        if (this.paused)
+            return; // don't update the screen if paused.
+        // Store the current transformation matrix
+        this.context.save();
+        // Use the identity matrix while clearing the canvas
+        this.context.setTransform(1, 0, 0, 1, 0, 0);
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        // Restore the transform
+        this.context.restore();
+    };
+    return Scene;
+}(PageContent));
 /// <reference path="PageContent.ts" />
 /// <reference path="Vector.ts" />
 /// <reference path="Polygon.ts" />
@@ -341,7 +404,8 @@ var Rocket = /** @class */ (function (_super) {
         if (id === void 0) { id = 0; }
         var _this = _super.call(this) || this;
         _this.id = 0;
-        _this.fuel = 100;
+        _this.fuelCapacity = 100;
+        _this.fuel = _this.fuelCapacity;
         _this.crashed = false;
         _this.success = false;
         _this.grounded = true;
@@ -474,6 +538,9 @@ var Rocket = /** @class */ (function (_super) {
     Rocket.prototype.getFuel = function () {
         return this.fuel;
     };
+    Rocket.prototype.getFuelCapacity = function () {
+        return this.fuelCapacity;
+    };
     Rocket.prototype.draw = function () {
         if (!this.ready())
             return;
@@ -535,69 +602,6 @@ var Stats = /** @class */ (function () {
     }
     return Stats;
 }());
-var Command;
-(function (Command) {
-    Command[Command["Wait"] = 0] = "Wait";
-    Command[Command["MainEngine"] = 1] = "MainEngine";
-    Command[Command["LeftThruster"] = 2] = "LeftThruster";
-    Command[Command["RightThruster"] = 3] = "RightThruster";
-})(Command || (Command = {}));
-/// <reference path="Command.ts" />
-var DNA = /** @class */ (function () {
-    function DNA(genes) {
-        if (genes === void 0) { genes = undefined; }
-        this.genes = [];
-        if (genes) {
-            this.genes = genes;
-        }
-        else {
-            for (var i = 0; i < 1000; i++) {
-                this.genes.push(this.randomCommand());
-            }
-        }
-    }
-    DNA.prototype.randomCommand = function () {
-        var num = Math.floor(Math.random() * 4) + 1;
-        if (num == 1) {
-            return Command.Wait;
-        }
-        else if (num == 2) {
-            return Command.MainEngine;
-        }
-        else if (num == 3) {
-            return Command.LeftThruster;
-        }
-        else if (num == 4) {
-            return Command.RightThruster;
-        }
-    };
-    /**
-     * Make a child out of two DNA objects.
-     * @param partner
-     */
-    DNA.prototype.crossover = function (partner, lastFrame) {
-        var childGenes = [];
-        var mid = Math.floor(Math.random() * lastFrame); // choose a midpoint within the number of frames that was ran.
-        for (var i = 0; i < this.genes.length; i++) {
-            if (i > mid) {
-                childGenes.push(this.genes[i]);
-            }
-            else {
-                childGenes.push(partner.genes[i]);
-            }
-        }
-        return new DNA(childGenes);
-    };
-    DNA.prototype.mutation = function (percent) {
-        if (percent === void 0) { percent = 0.01; }
-        for (var i = 0; i < this.genes.length; i++) {
-            if (Math.random() < percent) {
-                this.genes[i] = this.randomCommand();
-            }
-        }
-    };
-    return DNA;
-}());
 /// <reference path="Scene.ts" />
 /// <reference path="Planet.ts" />
 /// <reference path="Rocket.ts" />
@@ -617,6 +621,7 @@ var MissionControl = /** @class */ (function (_super) {
         _this.matingpool = [];
         _this.stats = new Stats();
         _this.useAI = true;
+        _this.populationSize = 20;
         _this.mutationPercentage = 0.01;
         _this.upPressed = false;
         _this.leftPressed = false;
@@ -624,7 +629,7 @@ var MissionControl = /** @class */ (function (_super) {
         _this.frame = 0;
         _this.statsUpdateFrequence = 0;
         _this.registerUserInput();
-        for (var i = 0; i < 20; i++) {
+        for (var i = 0; i < _this.populationSize; i++) {
             var rocket = new Rocket(i);
             rocket.setGravity(_this.planet.getGravity());
             _this.rockets.push(rocket);
@@ -688,7 +693,7 @@ var MissionControl = /** @class */ (function (_super) {
     };
     MissionControl.prototype.calcFitness = function (rocket) {
         var distance = Math.round(this.planet.distanceToTarget(rocket.getHitBox()));
-        var fitness = this.canvas.height * 2 - distance;
+        var fitness = Math.pow(this.canvas.height * 2 - distance, 3) + (rocket.getFuelCapacity() - rocket.getFuel());
         if (rocket.isSuccess()) {
             fitness *= 10;
         }

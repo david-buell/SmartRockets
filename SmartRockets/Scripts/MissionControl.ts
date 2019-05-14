@@ -18,6 +18,7 @@ class MissionControl extends Scene {
     private stats: Stats = new Stats();
 
     private useAI = true;
+    private populationSize = 20;
     private mutationPercentage = 0.01;
 
     private upPressed: boolean = false;
@@ -32,7 +33,7 @@ class MissionControl extends Scene {
         
         this.registerUserInput();
 
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < this.populationSize; i++) {
             let rocket = new Rocket(i);
             rocket.setGravity(this.planet.getGravity());
             this.rockets.push(rocket);
@@ -98,7 +99,7 @@ class MissionControl extends Scene {
 
     private calcFitness(rocket: Rocket): number {
         let distance = Math.round(this.planet.distanceToTarget(rocket.getHitBox()));
-        let fitness = this.canvas.height * 2 - distance;
+        let fitness = Math.pow(this.canvas.height * 2 - distance, 3) + (rocket.getFuelCapacity() - rocket.getFuel());
         if (rocket.isSuccess()) {
             fitness *= 10;
         }
