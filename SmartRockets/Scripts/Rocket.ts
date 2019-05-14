@@ -2,6 +2,8 @@
 /// <reference path="Vector.ts" />
 /// <reference path="Polygon.ts" />
 
+declare var ROOT: string;
+
 class Rocket extends PageContent {
     private id: number = 0;
     private fuelCapacity: number = 100;
@@ -31,7 +33,7 @@ class Rocket extends PageContent {
     private readonly RIGHT_ANGLE_RADIANS: number = 1.5708; //(90 * Math.PI / 180) 
     private readonly RAD_TO_DEG: number = 57.2958; //(180 / Math.PI) 
 
-    private pic : HTMLImageElement = new Image();
+    private pic: HTMLImageElement = new Image();
     private picLoaded : boolean = false;
 
 
@@ -40,7 +42,7 @@ class Rocket extends PageContent {
         this.id = id;
         this.position.set(this.canvas.width / 2, this.canvas.height - 5);
 
-        this.pic.src = '../images/rocket_sm3.png';
+        this.pic.src = ROOT + '/images/rocket.png';
         this.pic.onload = () => {
             this.picLoaded = true;
         }

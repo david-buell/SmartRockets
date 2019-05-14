@@ -12,15 +12,9 @@ body {
     padding-right: 15px;
 }
 
-/* QR code generator */
-#qrCode {
-    margin: 15px;
-}
-
 #canvas {
     margin: 0 auto;
     display: block;
-    /*background-color: #ECECEC;*/
     border: 1px solid black;
     background: url("../images/background.jpg") repeat #ECECEC;
 }

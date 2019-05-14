@@ -134,8 +134,7 @@ var PageContent = /** @class */ (function () {
     }
     return PageContent;
 }());
-/// <reference path="PageContent.ts" />
-/// <reference path="Circle.ts" />
+/// <reference path="PageContent.ts" />>
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
@@ -149,6 +148,41 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
+/**
+ * Provides a draw method to use for animations.
+ * @author David Buell
+ */
+var Scene = /** @class */ (function (_super) {
+    __extends(Scene, _super);
+    function Scene() {
+        var _this = _super.call(this) || this;
+        _this.paused = false;
+        window.requestAnimationFrame(function () { return _this.animate(); });
+        return _this;
+    }
+    /** Creates an event loop and handles cleanup to allow for draw() to work on the canvas. */
+    Scene.prototype.animate = function () {
+        var _this = this;
+        this.clearCanvas();
+        this.draw();
+        window.requestAnimationFrame(function () { return _this.animate(); });
+    };
+    /** Removes all information fromt the canvas while preserving transformations. */
+    Scene.prototype.clearCanvas = function () {
+        if (this.paused)
+            return; // don't update the screen if paused.
+        // Store the current transformation matrix
+        this.context.save();
+        // Use the identity matrix while clearing the canvas
+        this.context.setTransform(1, 0, 0, 1, 0, 0);
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        // Restore the transform
+        this.context.restore();
+    };
+    return Scene;
+}(PageContent));
+/// <reference path="PageContent.ts" />
+/// <reference path="Circle.ts" />
 var Planet = /** @class */ (function (_super) {
     __extends(Planet, _super);
     function Planet() {
@@ -361,40 +395,6 @@ var Polygon = /** @class */ (function () {
     };
     return Polygon;
 }());
-/// <reference path="PageContent.ts" />>
-/**
- * Provides a draw method to use for animations.
- * @author David Buell
- */
-var Scene = /** @class */ (function (_super) {
-    __extends(Scene, _super);
-    function Scene() {
-        var _this = _super.call(this) || this;
-        _this.paused = false;
-        window.requestAnimationFrame(function () { return _this.animate(); });
-        return _this;
-    }
-    /** Creates an event loop and handles cleanup to allow for draw() to work on the canvas. */
-    Scene.prototype.animate = function () {
-        var _this = this;
-        this.clearCanvas();
-        this.draw();
-        window.requestAnimationFrame(function () { return _this.animate(); });
-    };
-    /** Removes all information fromt the canvas while preserving transformations. */
-    Scene.prototype.clearCanvas = function () {
-        if (this.paused)
-            return; // don't update the screen if paused.
-        // Store the current transformation matrix
-        this.context.save();
-        // Use the identity matrix while clearing the canvas
-        this.context.setTransform(1, 0, 0, 1, 0, 0);
-        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        // Restore the transform
-        this.context.restore();
-    };
-    return Scene;
-}(PageContent));
 /// <reference path="PageContent.ts" />
 /// <reference path="Vector.ts" />
 /// <reference path="Polygon.ts" />
@@ -428,7 +428,7 @@ var Rocket = /** @class */ (function (_super) {
         _this.picLoaded = false;
         _this.id = id;
         _this.position.set(_this.canvas.width / 2, _this.canvas.height - 5);
-        _this.pic.src = '../images/rocket_sm3.png';
+        _this.pic.src = ROOT + '/images/rocket.png';
         _this.pic.onload = function () {
             _this.picLoaded = true;
         };
